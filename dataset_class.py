@@ -174,7 +174,7 @@ class dataset:
     
     new_dict_files = {}
     for class_ in classes:
-      new_dict_files[class_] = np.random.choice(dict_files[class_], size = nfiles_under)
+      new_dict_files[class_] = np.random.choice(dict_files[class_], size = nfiles_under, replace=False)
       
     return dataset(dict_files=new_dict_files)
     
@@ -210,7 +210,7 @@ class dataset:
     
     new_dict_files = {}
     for class_ in classes:
-      new_dict_files[class_] = np.random.choice(dict_files[class_], size = dict_new_nfiles[class_])
+      new_dict_files[class_] = np.random.choice(dict_files[class_], size = dict_new_nfiles[class_], replace=False)
       
     return dataset(dict_files=new_dict_files)
 
