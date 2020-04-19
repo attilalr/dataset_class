@@ -2,6 +2,9 @@ import os, sys, shutil, string, random
 from pathlib import Path
 import numpy as np
 
+from skimage.io import imsave, imread
+#skimage.io.imsave(fname, arr, plugin=None, check_contrast=True, **plugin_args)
+
 class dataset:
   def __init__(self, dtset_folder=None, dict_files=None):
   
@@ -59,6 +62,47 @@ class dataset:
     else:
       print ('Error. The class needs a folder path or a dict_file')
       sys.exit(0)
+  
+  def apply_f(self, f, name):
+    '''
+    f is a function which takes an img and returns an img.
+    name is a new name for the dataset.
+    
+    return
+      a new dataset with the already written folders
+    '''
+  
+    if self.dataset_type != 'real':
+      print ('Error: the dataset must be real.')
+      return None
+    else:
+      if name == self.name:
+        print ('Error: You have to change the new dataset name.')
+        return None
+      else:
+        if (self.p.with_name(name)).exists():
+          print ('File/folder {} exists. Try another.'.format(self.p.with_name(name)))
+          return None
+        else:
+          # create the destination folders first
+          
+          new_dict = {}
+          new_parent = self.p.with_name(name)
+          for class_ in self.classes:
+            new_dict[class_] = []
+            os.makedirs(self.p.with_name(name)/class_)
+            
+          # copy files
+          for class_ in self.classes:
+            print ('Working on class {}...'.format(class_))
+            for file_ in self.dict_files[class_]:
+              new_img = f(imread(file_).astype(np.uint8))
+              #imsave(new_parent/class_/file_.name, new_img, img_uint8)
+              imsave(new_parent/class_/file_.name, new_img)
+              new_dict[class_].append(new_parent/class_/file_.name)
+          print ('Finished copy to folder {}'.format(self.p.with_name(name)))
+          
+    return dataset(dtset_folder=new_parent)   
   
   @staticmethod
   def merge_datasets(dset1, dset2):
@@ -214,12 +258,29 @@ class dataset:
       
     return dataset(dict_files=new_dict_files)
 
+# opening a dataset
+'''
+d = dataset(dtset_folder='Dataset/30_microm/macybloodsmear_')
+d2 = dataset.undersample(d)
+print (d2)
+d2.write_to_disk('mc_undersampled')
 
-#d = dataset(dtset_folder='Dataset/30_microm/macybloodsmear_resample_0.1')
-#d2 = dataset.undersample(d.dict_files)
-#print (d2)
-#d2.write_to_disk('mc_test_us')
-#print (d2)
-#d3 = dataset('Dataset/30_microm/ACVP_4_resample_0.05')
+d3 = dataset('Dataset/30_microm/ACVP_4_resample_0.05')
+d4 = dataset.merge_datasets(d2, d3)
+d4.write_to_disk('d2_d3_merged')
+'''
 
-#d4 = dataset.merge_datasets(d2, d3)
+# example to apply_f use
+'''
+from skimage import exposure
+from skimage import data, img_as_float
+
+d = dataset(dtset_folder='Dataset/60_microm/acvp_macy_resampled_13.77k_per_class')
+d.apply_f(exposure.equalize_adapthist, 'acvp_macy_resampled_13.77k_per_class_adaphist')
+
+d = dataset(dtset_folder='Dataset/60_microm/cbc3_resampled_7k_per_class')
+d.apply_f(exposure.equalize_adapthist, 'cbc3_resampled_7k_per_class_adaphist')
+'''
+
+
+
